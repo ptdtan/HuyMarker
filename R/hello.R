@@ -26,9 +26,7 @@ process_GSE115469 <- function()
   m <- as(m, "dgCMatrix")
   rownames(m) <- row.names
   genes.df <- data.frame(id = row.names, symbol = genes_map[[2]][match(row.names, genes_map$X1)])
-  #readr::write_csv(col.names, file.path(dir, "barcodes.tsv"), col_names = F)
-  #readr::write_tsv(genes.df, file.path(dir, "genes.tsv"), col_names = F)
-  #Matrix::writeMM(m, file.path(dir, "matrix.mtx"))
+
   for(i in seq(1, 5)){
     s_dir <- file.path(dir, paste0("P", i))
     dir.create(s_dir)
@@ -53,7 +51,7 @@ process_GSE62270 <- function()
   sce.counts <- sce[[1]]
 }
 
-scoringGeneMarkers <- function(final_scores, zero.pct.max = 0.5,
+scoringGeneMarkers_cnt <- function(final_scores, zero.pct.max = 0.5,
                                max.genes = 30, plot = FALSE,
                                max.zero.cnt = 50,
                                min.case.pct = 0.5)
@@ -68,5 +66,17 @@ scoringGeneMarkers <- function(final_scores, zero.pct.max = 0.5,
   return(final_scores)
 }
 
+scoringGeneMarkers_rate <- function(final_scores, zero.pct.max = 0.5,
+                                   max.genes = 30, plot = FALSE,
+                                   max.zero.cnt = 50,
+                                   min.case.pct = 0.5)
+{
+  #final_scores <- final_scores[final_scores$`zero.pct` < zero.pct.max, ]
 
+  final_scores$rate <- (final_scores$case.pct)*(final_scores$case.pct + 1) * (final_scores$case.exp) *
+    (1 / (final_scores$zero.pct + 0.001)) *
+    (1 / (final_scores$zero.exp + 0.001))
 
+  final_scores <- final_scores[order(-final_scores$rate), ]
+  return(final_scores)
+}

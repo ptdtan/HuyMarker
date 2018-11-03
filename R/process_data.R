@@ -5,7 +5,7 @@ suppressPackageStartupMessages(library(scDD))
 
 process_pbmc4k <- function()
 {
-  master_dir <- "data/PBMC4k"
+  master_dir <- "data.1/PBMC4k"
   mat.sp <- NoraSC::Read10XData(file.path(master_dir, "main"), type = "hdf5", return.raw = T)
   mat.raw <- as(mat.sp, "matrix")
   graph <- jsonlite::fromJSON(file.path(master_dir, "main/cluster_result.json"))
@@ -16,20 +16,22 @@ process_pbmc4k <- function()
     message("Cluster", i)
     null.data <- which(clusters == i)
     null.data.1 <- sample(x = null.data, min(100, length(null.data)), replace = F)
-    null.data.2 <- sample(x = setdiff(null.data, null.data.1), 100, replace = F)
+    d <- setdiff(null.data, null.data.1)
+    null.data.2 <- sample(x = d ,
+                          min(100, length(d)), replace = F)
     real.data.1 <- which(clusters == i)
     real.data.2 <- which(clusters != i)
     PBMC4k <- list(real = list(real.data.1, real.data.2),
                      null = list(null.data.1, null.data.2),
-                     mat = assay(data[[1]]))
-    data.file <- file.path(paste0("data/PBMC4k_", i, "_data.rds"))
+                     mat = assay(mat.raw))
+    data.file <- file.path(paste0("data.1/PBMC4k_", i, "_data.rds"))
     saveRDS(PBMC4k, data.file)
   }
 }
 
 process_zeisel2015 <- function()
 {
-  master_dir <- "data/zeisel2015"
+  master_dir <- "data.1/zeisel2015"
   mat.sp <- NoraSC::Read10XData(file.path(master_dir, "main"), type = "hdf5", return.raw = T)
   mat.raw <- as(mat.sp, "matrix")
   graph <- jsonlite::fromJSON(file.path(master_dir, "main/cluster_result.json"))
@@ -40,20 +42,22 @@ process_zeisel2015 <- function()
     message("Cluster", i)
     null.data <- which(clusters == i)
     null.data.1 <- sample(x = null.data, min(100, sum(clusters == i)), replace = F)
-    null.data.2 <- sample(x = setdiff(null.data, null.data.1), 100, replace = F)
+    d <- setdiff(null.data, null.data.1)
+    null.data.2 <- sample(x = d ,
+                          min(100, length(d)), replace = F)
     real.data.1 <- which(clusters == i)
     real.data.2 <- which(clusters != i)
     data <- list(real = list(real.data.1, real.data.2),
                    null = list(null.data.1, null.data.2),
-                   mat = assay(data[[1]]))
-    data.file <- file.path(paste0("data/zeisel2015_", i, "_data.rds"))
+                   mat = assay(mat.raw))
+    data.file <- file.path(paste0("data.1/zeisel2015_", i, "_data.rds"))
     saveRDS(data, data.file)
   }
 }
 
 process_GSE62270 <- function()
 {
-  file <- "data/GSE62270-GPL17021.rds"
+  file <- "data.1/GSE62270-GPL17021.rds"
   data <- readRDS(file)
   config <- list(
     groupid = "source_name_ch1",
@@ -67,8 +71,10 @@ process_GSE62270 <- function()
   cond2 <- "Randomly extracted Lgr5-positive intestinal cells"
   null.data <- which(clusters == cond2)
   null.data.1 <- sample(x = null.data, 100, replace = F)
-  null.data.2 <- sample(x = setdiff(null.data, null.data.1), 100, replace = F)
-  data.file <- file.path("data/GSE62270_data.rds")
+  d <- setdiff(null.data, null.data.1)
+  null.data.2 <- sample(x = d ,
+                        min(100, length(d)), replace = F)
+  data.file <- file.path("data.1/GSE62270_data.rds")
 
   GSE62270 <- list(real = list(real.data.1, real.data.2),
                    null = list(null.data.1, null.data.2),
@@ -80,7 +86,7 @@ process_GSE81076 <- function()
 {
 
   # GSE81076_GPL18573 -------------------------------------------------------
-  file <- "data/GSE81076-GPL18573.rds"
+  file <- "data.1/GSE81076-GPL18573.rds"
   data <- readRDS(file)
   config <- list(
     groupid = "characteristics_ch1",
@@ -94,15 +100,17 @@ process_GSE81076 <- function()
   cond2 <- "cell type: live sorted cells"
   null.data <- which(clusters == cond2)
   null.data.1 <- sample(x = null.data, 100, replace = F)
-  null.data.2 <- sample(x = setdiff(null.data, null.data.1), 100, replace = F)
+  d <- setdiff(null.data, null.data.1)
+  null.data.2 <- sample(x = d ,
+                        min(100, length(d)), replace = F)
   GSE81076_GPL18573 <- list(real = list(real.data.1, real.data.2),
                   null = list(null.data.1, null.data.2),
                   mat = assay(data[[1]]))
-  data.file <- file.path("data/GSE81076_GPL18573_data.rds")
+  data.file <- file.path("data.1/GSE81076_GPL18573_data.rds")
   saveRDS(GSE81076_GPL18573, data.file)
 
   # GSE81076-GPL16791.rds ---------------------------------------------------
-  file <- "data/GSE81076-GPL16791.rds"
+  file <- "data.1/GSE81076-GPL16791.rds"
   data <- readRDS(file)
   config <- list(
     groupid = "characteristics_ch1",
@@ -116,18 +124,20 @@ process_GSE81076 <- function()
   cond2 <- "cell type: live sorted cells"
   null.data <- which(clusters == cond2)
   null.data.1 <- sample(x = null.data, 100, replace = F)
-  null.data.2 <- sample(x = setdiff(null.data, null.data.1), 100, replace = F)
+  d <- setdiff(null.data, null.data.1)
+  null.data.2 <- sample(x = d ,
+                        min(100, length(d)), replace = F)
   GSE81076_GPL16791 <- list(real = list(real.data.1, real.data.2),
                             null = list(null.data.1, null.data.2),
                             mat = assay(data[[1]]))
-  data.file <- file.path("data/GSE81076_GPL16791_data.rds")
+  data.file <- file.path("data.1/GSE81076_GPL16791_data.rds")
   saveRDS(GSE81076_GPL16791, data.file)
 
 }
 
 process_GSE78779 <- function()
 {
-  file <- "data/GSE78779-GPL17021.rds"
+  file <- "data.1/GSE78779-GPL17021.rds"
   data <- readRDS(file)
   config <- list(
     groupid = "characteristics_ch1.1",
@@ -141,11 +151,13 @@ process_GSE78779 <- function()
   cond2 <- "tissue: Ear"
   null.data <- which(clusters == cond2)
   null.data.1 <- sample(x = null.data, 100, replace = F)
-  null.data.2 <- sample(x = setdiff(null.data, null.data.1), min(100, length(null.data) - length(null.data.1)), replace = F)
+  d <- setdiff(null.data, null.data.1)
+  null.data.2 <- sample(x = d ,
+                        min(100, length(d)), replace = F)
   GSE78779 <- list(real = list(real.data.1, real.data.2),
                    null = list(null.data.1, null.data.2),
                    mat = assay(data[[1]]))
-  data.file <- file.path("data/GSE78779_data.rds")
+  data.file <- file.path("data.1/GSE78779_data.rds")
   saveRDS(GSE78779, data.file)
 }
 
@@ -181,7 +193,7 @@ process_simulate <- function()
   library(scDD)
   data(scDatEx)
   for(i in seq(1, 10)){
-    file <- file.path(paste0("data/sim_", i, ".rds"))
+    file <- file.path(paste0("data.1/sim_", i, ".rds"))
     message(paste("Doing", file))
     SD <- simulateSet(scDatEx)
     real.data <- colData(SD)[["condition"]]

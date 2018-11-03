@@ -1,4 +1,4 @@
-run_all <- function(obj, type = "real")
+run_all <- function(obj, type = "real", sample = F)
 {
   source("R/run_Huy.R")
   source("R/run_Seurat.R")
@@ -7,11 +7,16 @@ run_all <- function(obj, type = "real")
   source("R/run_limma.R")
   source("R/run_ttest.R")
   mat.raw <<- obj[["mat"]]
+  set.seed(1)
   cells.1 <- obj[[type]][[1]]
   cells.2 <- obj[[type]][[2]]
-  cells.1 <- sample(cells.1, min(length(cells.1), 100), replace = F)
-  cells.2 <- sample(cells.2, min(length(cells.2), 100), replace = F)
 
+  if(sample){
+    cells.1 <- sample(cells.1, min(length(cells.1), 100), replace = F)
+    cells.2 <- sample(cells.2, min(length(cells.2), 100), replace = F)
+  }
+
+  stopifnot(length(intersect(cells.1, cells.2)) == 0)
   res <- list(res_Huy = run_Huy(cells.1, cells.2),
               res_SeuratBimod = run_Seurat(cells.1, cells.2, method = "bimod"),
               res_SeuratT = run_Seurat(cells.1, cells.2, method = "t"),
@@ -21,10 +26,9 @@ run_all <- function(obj, type = "real")
               res_edgeRQLFDetRate = run_edgeRQLFDetRate(cells.1, cells.2),
               res_edgeRQLF = run_edgeRQLF(cells.1, cells.2),
               #res_ttest = run_ttest(cells.1, cells.2),
-              res_MASTcpmDetRate = run_MASTcpmDetRate(cells.1, cells.2),
+              #res_MASTcpmDetRate = run_MASTcpmDetRate(cells.1, cells.2),
               res_limmatrend = run_limmatrend(cells.1, cells.2)
               )
-
   return(res)
 }
 
@@ -37,31 +41,96 @@ run_FDR_sim <- function()
 run_FDR_real <- function()
 {
   files <- list(
-    GSE62270 = "data/GSE62270_data.rds",
-    GSE81076_GPL16791 = "data/GSE81076_GPL16791_data.rds",
-    GSE81076_GPL18573 = "data/GSE81076_GPL18573_data.rds",
-    pbmc4k_1 = "data/PBMC4k_1_data.rds",
-    pbmc4k_2 = "data/PBMC4k_2_data.rds",
-    pbmc4k_3 = "data/PBMC4k_3_data.rds",
-    zeisel2015_7 = "data/zeisel2015_7_data.rds",
-    zeisel2015_8 = "data/zeisel2015_8_data.rds",
-    zeisel2015_9 = "data/zeisel2015_9_data.rds"
+    PBMC4k_1_sim = "data.1/PBMC4k_1_sim_data.rds"
+    # GSE62270 = "data.1/GSE62270_data.rds",
+    # GSE81076_GPL16791 = "data.1/GSE81076_GPL16791_data.rds",
+    # GSE81076_GPL18573 = "data.1/GSE81076_GPL18573_data.rds",
+    # pbmc4k_1 = "data.1/PBMC4k_1_data.rds",
+    # pbmc4k_2 = "data.1/PBMC4k_2_data.rds"
+    # pbmc4k_3 = "data.1/PBMC4k_3_data.rds",
+    # zeisel2015_7 = "data.1/zeisel2015_7_data.rds",
+    # zeisel2015_8 = "data.1/zeisel2015_8_data.rds",
+    # zeisel2015_9 = "data.1/zeisel2015_9_data.rds"
     )
-  stats <- parallel::mclapply(files, function(file){
+  stats <- lapply(files, function(file){
                   obj = readRDS(file)
-                  timming <- system.time({
-                    res = run_all(obj, type = "null")
-                    stats = get_FDR_onedata(res)
+                  tryCatch({
+                    timming <- system.time({
+                      res = run_all(obj, type = "real", sample = F)
+                      s = get_FDR_onedata(res)
+                    })
+                    print(timming)
+                    return(s)
+                }, error = function(e) {
+                  paste("Run failed for", file)
                   })
-                  message(timming)
-                }, mc.cores = 12)
-  saveRDS(stats, file = "data/stats_results.rds")
+              })
+  saveRDS(stats, file = "data.1/stats_results.rds")
+  return(stats)
 }
 
 get_FDR_onedata <- function(res)
 {
   lapply(res, function(obj){
-    tab <- table(obj$df$padj < 0.05)
-    tab[[2]]/sum(tab[[2]] + tab[[1]])
+    length(which(obj$df$padj < 0.05))/nrow(obj$df)
   })
+}
+
+run_TPR_real <- function(data_f, data.truth, sample)
+{
+  truth <- readRDS(data.truth)
+  obj = readRDS(data_f)
+  tryCatch({
+    timming <- system.time({
+      res = run_all(obj, type = "real", sample = sample)
+      s = get_Precision_onedata(res, truth)
+    })
+    print(timming)
+  }, error = function(e) {
+    paste("Run failed for", file)
+  })
+
+  saveRDS(s, file = paste0(data_f, "_stats.rds"))
+  return(s)
+}
+
+get_Precision_onedata <- function(res, truth)
+{
+  truth_genes <- c(truth[[1]]$low, truth[[2]]$low)
+  lapply(res, function(obj){
+    genes <- rownames(obj$df)
+    inter.genes <- length(which(genes[obj$df$padj <= 0.05] %in% truth_genes))
+    res <- c(inter.genes/length(which(obj$df$padj <= 0.05)), inter.genes, length(which(obj$df$padj <= 0.05)))
+  })
+}
+
+run_one_study <- function(file, type, prefix)
+{
+    obj = readRDS(file)
+    tryCatch({
+      timming <- system.time({
+        res = run_all(obj, type = type)
+        s = get_FDR_onedata(res)
+      })
+      print(timming)
+    }, error = function(e) {
+      message("Run failed for", file)
+      return(NULL)
+    })
+    res <- cbind(s)
+    colnames(res) <- prefix
+    res <- data.frame(res[, 1], row.names = prefix)
+    write.table(res, file.path(type, paste0(prefix, ".stats")))
+}
+
+draw_stats <- function(type = "null", output_folder = "figures")
+{
+  require(ggplot2)
+  require(reshape2)
+  files <- list.files(type)
+  dfs <- lapply(file.path(type, files), read.table)
+  rows <- lapply(dfs, unlist)
+  stats <- do.call(rbind, rows)
+  stats_m <- melt(stats)
+  readr::write_tsv(stats_m, file.path(output_folder, paste0(type, "_stats.tsv") ))
 }
