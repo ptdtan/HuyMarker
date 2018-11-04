@@ -76,7 +76,7 @@ get_FDR_onedata <- function(res)
   })
 }
 
-run_TPR_real <- function(data_f, data.truth, sample)
+run_TPR_real <- function(data_f, data.truth, sample = F)
 {
   truth <- readRDS(data.truth)
   obj = readRDS(data_f)

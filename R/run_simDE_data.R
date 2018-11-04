@@ -1,4 +1,4 @@
-sim_PBMC4K_1 <- function()
+sim_PBMC4K_1 <- function(seed)
 {
   master_dir <- "data.1/PBMC4k"
   mat.sp <- NoraSC::Read10XData(file.path(master_dir, "main"), type = "hdf5", return.raw = T)
@@ -8,6 +8,7 @@ sim_PBMC4K_1 <- function()
   # Randomly select two groups, groups 1 is four fold in size
   clusters1 <- which(clusters == 1)
   n <- length(clusters1)
+  set.seed(seed)
   groups.1 <- sample(clusters1, round(0.2*n), replace = F)
   groups.2 <- setdiff(clusters1, groups.1)
 
@@ -48,8 +49,8 @@ sim_PBMC4K_1 <- function()
   sim_PBMC4k.1 <- list(real = list(real.data.1, real.data.2),
                        null = NULL,
                        mat = mat)
-  data.truth <- file.path(paste0("data.1/PBMC4k_1_sim_truth.rds"))
-  data.file <- file.path(paste0("data.1/PBMC4k_1_sim_data.rds"))
+  data.truth <- file.path(paste0("data.1/PBMC4k_", seed, "_sim_truth.rds"))
+  data.file <- file.path(paste0("data.1/PBMC4k_", seed, "_sim_data.rds"))
   saveRDS(sim_PBMC4k.1, data.file)
   saveRDS(truth, data.truth)
 }
