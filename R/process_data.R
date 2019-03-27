@@ -224,7 +224,6 @@ prepare_all <- function()
   process_GSE78779()
 }
 
-
 install_packages <- function()
 {
   packages <- c("edgeR", "MultiAssayExperiment", "scDD", "genefilter")

@@ -63,7 +63,7 @@ sim_PBMC4K_1_subsampling <- function(rate = 0.8)
   clusters <- graph$kmeans$clusters[3, ]
 
   message("Randomly select two groups, groups 1 is four fold in size")
-  clusters1 <- which(clusters == 2)
+  clusters1 <- which(clusters == 1)
   n <- length(clusters1)
   groups.1 <- sample(clusters1, round(0.2*n), replace = F)
   groups.2 <- setdiff(clusters1, groups.1)
@@ -104,6 +104,7 @@ sim_PBMC4K_1_subsampling <- function(rate = 0.8)
   real.data.1 <- seq(1, length(groups.1))
   real.data.2 <- seq(1, length(groups.2)) + length(groups.1)
 
+  m <- mat[, real.data.1]
   sub_m <- vector("list", ncol(m))
   for(i in seq(1, ncol(m))){
     message(i)

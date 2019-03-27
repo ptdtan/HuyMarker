@@ -1,4 +1,4 @@
-run_all <- function(obj, type = "real", sample = F)
+run_all <- function(obj, type = "real", sample = F, n_samples = 100, seed = 1)
 {
   source("R/run_Huy.R")
   source("R/run_Seurat.R")
@@ -7,14 +7,18 @@ run_all <- function(obj, type = "real", sample = F)
   source("R/run_limma.R")
   source("R/run_ttest.R")
   mat.raw <<- obj[["mat"]]
-  set.seed(1)
+  set.seed(seed)
   cells.1 <- obj[[type]][[1]]
   cells.2 <- obj[[type]][[2]]
 
+  n.samples.1 <- sample(seq(25, 50))
   if(sample){
-    cells.1 <- sample(cells.1, min(length(cells.1), 100), replace = F)
-    cells.2 <- sample(cells.2, min(length(cells.2), 100), replace = F)
+    cells.1 <- sample(cells.1, min(length(cells.1), n.samples.1), replace = F)
+    cells.2 <- sample(cells.2, min(length(cells.2), 1000), replace = F)
   }
+
+  message("cells.1 ", length(cells.1))
+  message("cells.2 ", length(cells.2))
 
   stopifnot(length(intersect(cells.1, cells.2)) == 0)
   res <- list(res_Huy = run_Huy(cells.1, cells.2),
@@ -76,13 +80,13 @@ get_FDR_onedata <- function(res)
   })
 }
 
-run_TPR_real <- function(data_f, data.truth, sample = F)
+run_TPR_real <- function(data_f, data.truth, prefix, sample = F, n_samples = 100, seed =1)
 {
   truth <- readRDS(data.truth)
   obj = readRDS(data_f)
   tryCatch({
     timming <- system.time({
-      res = run_all(obj, type = "real", sample = sample)
+      res = run_all(obj, type = "real", sample = sample, n_samples = n_samples, seed = seed)
       s = get_Precision_onedata(res, truth)
     })
     print(timming)
@@ -90,7 +94,8 @@ run_TPR_real <- function(data_f, data.truth, sample = F)
     paste("Run failed for", file)
   })
 
-  saveRDS(s, file = paste0(data_f, "_stats.rds"))
+  saveRDS(s, file = paste(data_f, prefix, "stats.rds", sep = "_"))
+  saveRDS(res, file = paste(data_f, prefix, "res.rds", sep = "_"))
   return(s)
 }
 

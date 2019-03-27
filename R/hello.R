@@ -5,7 +5,7 @@ hello <- function() {
 
 library(Matrix)
 library(Seurat)
-library(org.Hs.eg.db)
+#library(org.Hs.eg.db)
 
 
 process_GSE115469 <- function()
@@ -73,7 +73,7 @@ scoringGeneMarkers_rate <- function(final_scores, zero.pct.max = 0.5,
 {
   #final_scores <- final_scores[final_scores$`zero.pct` < zero.pct.max, ]
 
-  final_scores$rate <- (final_scores$case.pct)*(final_scores$case.pct + 1) * (final_scores$case.exp) *
+  final_scores$rate <- (final_scores$case.cnt^2) * (final_scores$case.exp) *
     (1 / (final_scores$zero.pct + 0.001)) *
     (1 / (final_scores$zero.exp + 0.001))
 
